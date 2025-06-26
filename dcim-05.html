@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Namanave Data Centre - DCIM Floor Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f5f7;
+        }
+        .rack {
+            transition: all 0.2s ease-in-out;
+        }
+        .rack:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        .modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            transition: all 0.3s ease;
+        }
+        .highlight {
+            border-color: #2563eb !important; /* blue-600 */
+            animation: highlight-pulse 1.5s infinite;
+        }
+        @keyframes highlight-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { box-shadow: 0 0 15px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        .cage-border {
+            border: 2px dashed #fb923c; /* orange-400 */
+        }
+        .hot-aisle {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(90deg, #22c55e, #f97316, #ef4444); /* green-orange-red */
+        }
+        .heat-shimmer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+            animation: shimmer 4s infinite linear;
+            opacity: 0.5;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0%); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 antialiased">
+
+    <!-- Main Container -->
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-6">
+            <h1 class="text-4xl md:text-5xl font-bold text-blue-600">Namanave Data Centre</h1>
+            <p class="text-gray-500 mt-2">DCIM Floor Plan Module</p>
+        </header>
+
+        <!-- Search and Filter Panel -->
+        <div class="p-4 bg-white rounded-lg shadow-md mb-8 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+            <div class="md:col-span-1">
+                <label for="search-input" class="sr-only">Search</label>
+                <input type="text" id="search-input" placeholder="Search by Rack ID or Customer..." class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="grid grid-cols-2 gap-4 md:col-span-2">
+                <div>
+                    <label for="temp-filter" class="text-sm font-medium text-gray-700">Temperature</label>
+                    <select id="temp-filter" class="w-full p-2 mt-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Statuses</option>
+                        <option value="normal">Normal</option>
+                        <option value="warning">Warning</option>
+                        <option value="critical">Critical</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="pdu-filter" class="text-sm font-medium text-gray-700">PDU Status</label>
+                    <select id="pdu-filter" class="w-full p-2 mt-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Statuses</option>
+                        <option value="online">All Online</option>
+                        <option value="offline">Any Offline</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="floor-plan" class="p-4 md:p-6 bg-white rounded-lg shadow-md space-y-8"></div>
+    </div>
+
+    <!-- Modal for Rack Metrics -->
+    <div id="rack-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 opacity-0 pointer-events-none z-50">
+        <div id="modal-content" class="modal-content bg-gray-50 rounded-xl shadow-2xl w-full max-w-2xl border border-gray-200 transform scale-95">
+            <div class="flex justify-between items-center p-4 border-b border-gray-200">
+                <div><h2 id="modal-rack-id" class="text-2xl font-bold text-gray-900"></h2><p id="modal-customer" class="text-md text-gray-600"></p></div>
+                <button id="close-modal" class="text-gray-400 hover:text-gray-800 text-4xl font-light">&times;</button>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="col-span-1 flex flex-col items-center justify-between bg-white p-4 rounded-lg shadow">
+                    <h3 class="font-bold text-gray-700 mb-2">Space Utilization</h3>
+                    <div id="rack-elevation-container" class="w-full h-64"></div>
+                    <p id="space-text" class="mt-2 font-semibold text-lg text-gray-800"></p>
+                </div>
+                <div class="col-span-1 md:col-span-2 space-y-5">
+                    <div class="bg-white p-4 rounded-lg shadow"><h3 class="font-bold text-gray-700 mb-2">Power Usage</h3><div class="w-full bg-gray-200 rounded-full h-6"><div id="power-bar" class="bg-green-500 h-6 rounded-full text-center text-white text-sm font-medium leading-6 transition-all duration-500" style="width: 0%;"></div></div><p id="power-capacity" class="text-xs text-right text-gray-500 mt-1"></p></div>
+                    <div class="bg-white p-4 rounded-lg shadow"><h3 class="font-bold text-gray-700 mb-3">PDU Status</h3><div class="flex justify-around"><div class="text-center"><p class="font-semibold text-sm text-gray-600">PDU A</p><span id="pdu-a-status" class="px-3 py-1 mt-1 inline-block text-white text-sm font-bold rounded-full">--</span></div><div class="text-center"><p class="font-semibold text-sm text-gray-600">PDU B</p><span id="pdu-b-status" class="px-3 py-1 mt-1 inline-block text-white text-sm font-bold rounded-full">--</span></div></div></div>
+                    <div class="grid grid-cols-3 gap-4 text-center"><div class="bg-white p-2 rounded-lg shadow"><h4 class="font-semibold text-xs text-gray-600">Front Temp</h4><p id="temp-front" class="text-2xl font-bold text-gray-800 mt-1"></p></div><div class="bg-white p-2 rounded-lg shadow"><h4 class="font-semibold text-xs text-gray-600">Rear Temp</h4><p id="temp-rear" class="text-2xl font-bold text-gray-800 mt-1"></p></div><div class="bg-white p-2 rounded-lg shadow"><h4 class="font-semibold text-xs text-gray-600">Humidity</h4><p id="humidity" class="text-2xl font-bold text-gray-800 mt-1"></p></div><div class="bg-white p-2 rounded-lg shadow col-span-3"><h4 class="font-semibold text-xs text-gray-600">Door Status</h4><p id="door-status" class="text-2xl font-bold mt-1">--</p></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- CONFIGURATION ---
+            const RACKS_PER_ROW = 20;
+            const ROW_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+            const CUSTOMERS = ["MTN", "Airtel", "Stanbic", "Centenary", "Umeme", "NWSC", "URA", "Jumia", "SafeBoda", "NBS TV", "New Vision", "Mukwano", "KCB", "DFCU", "Absa", "Total", "Vivo", "UBL", "Nile Breweries", "Britam", "UAP", "Jubilee"];
+            const CAGE_CONFIG = { customer: 'KCB', rows: ['E', 'F'], start: 1, end: 8 };
+
+            const floorPlanContainer = document.getElementById('floor-plan');
+            const modal = document.getElementById('rack-modal');
+            const closeModalBtn = document.getElementById('close-modal');
+            const searchInput = document.getElementById('search-input');
+            const tempFilter = document.getElementById('temp-filter');
+            const pduFilter = document.getElementById('pdu-filter');
+            
+            let rackElements = [], rackDataStore = {}, metricsInterval = null, aisleData = {};
+
+            function createCustomerAssigner() {
+                let customerIndex = 0, racksAssigned = 0, currentCustomer = '', racksToAssign = 0;
+                return () => {
+                    if (racksAssigned >= racksToAssign) {
+                        do {
+                            currentCustomer = CUSTOMERS[customerIndex % CUSTOMERS.length];
+                            customerIndex++;
+                        } while (currentCustomer === CAGE_CONFIG.customer);
+                        racksToAssign = Math.floor(Math.random() * 3) + 1;
+                        racksAssigned = 0;
+                    }
+                    racksAssigned++;
+                    return currentCustomer;
+                }
+            }
+
+            const createRackDiv = (rackId, customer) => {
+                const rackDiv = document.createElement('div');
+                rackDiv.className = 'rack flex-grow basis-0 cursor-pointer bg-gray-200 h-20 rounded border-2 border-gray-300 hover:border-blue-500 flex items-center justify-center p-1 text-center';
+                rackDiv.title = `${rackId} - ${customer}`;
+                
+                const rackIdText = document.createElement('span');
+                rackIdText.className = 'text-sm font-mono font-semibold text-gray-700';
+                rackIdText.textContent = rackId;
+                rackDiv.appendChild(rackIdText);
+
+                rackDiv.dataset.rackId = rackId;
+                rackElements.push(rackDiv);
+
+                if (!rackDataStore[rackId]) {
+                    rackDataStore[rackId] = { id: rackId, customer, power: parseFloat((Math.random() * 4.5 + 1).toFixed(2)), tempFront: parseFloat((Math.random() * 4 + 21).toFixed(1)), tempRear: parseFloat((Math.random() * 8 + 28).toFixed(1)), humidity: parseFloat((Math.random() * 20 + 40).toFixed(1)), space: Math.floor(Math.random() * 50 + 2), doorStatus: (Math.random() > 0.9 ? 'OPEN' : 'CLOSED'), pduA_status: (Math.random() > 0.95 ? 'OFFLINE' : 'ONLINE'), pduB_status: (Math.random() > 0.98 ? 'OFFLINE' : 'ONLINE')};
+                }
+                rackDiv.addEventListener('click', () => showMetricsModal(rackDataStore[rackId]));
+                return rackDiv;
+            };
+
+            const createRackRow = (rowLetter, assigner) => {
+                const rowWrapper = document.createElement('div');
+                const rowLabel = document.createElement('div');
+                rowLabel.className = 'text-gray-500 font-semibold mb-2 ml-1 text-sm';
+                rowLabel.textContent = `Row ${rowLetter}`;
+                rowWrapper.appendChild(rowLabel);
+
+                const mainRackContainer = document.createElement('div');
+                mainRackContainer.className = 'flex flex-nowrap gap-2';
+
+                if (CAGE_CONFIG.rows.includes(rowLetter)) {
+                    const cageContainer = document.createElement('div');
+                    cageContainer.className = 'relative cage-border p-2 rounded-lg flex flex-nowrap gap-2';
+                    cageContainer.style.flexGrow = CAGE_CONFIG.end;
+                    cageContainer.style.flexBasis = '0';
+                    
+                    const cageLabel = document.createElement('span');
+                    cageLabel.className = 'absolute -top-2 left-4 bg-orange-400 text-white text-xs font-bold px-2 py-0.5 rounded-md pointer-events-auto';
+                    cageLabel.textContent = `${CAGE_CONFIG.customer} Cage`;
+                    cageContainer.appendChild(cageLabel);
+
+                    for (let rackNum = CAGE_CONFIG.start; rackNum <= CAGE_CONFIG.end; rackNum++) {
+                        const rackId = `${rowLetter}${String(rackNum).padStart(2, '0')}`;
+                        cageContainer.appendChild(createRackDiv(rackId, CAGE_CONFIG.customer));
+                    }
+                    mainRackContainer.appendChild(cageContainer);
+
+                    for (let rackNum = CAGE_CONFIG.end + 1; rackNum <= RACKS_PER_ROW; rackNum++) {
+                        const rackId = `${rowLetter}${String(rackNum).padStart(2, '0')}`;
+                        mainRackContainer.appendChild(createRackDiv(rackId, assigner()));
+                    }
+                } else {
+                    for (let rackNum = 1; rackNum <= RACKS_PER_ROW; rackNum++) {
+                        const rackId = `${rowLetter}${String(rackNum).padStart(2, '0')}`;
+                        mainRackContainer.appendChild(createRackDiv(rackId, assigner()));
+                    }
+                }
+                rowWrapper.appendChild(mainRackContainer);
+                return rowWrapper;
+            };
+
+            function buildFloorPlan() {
+                floorPlanContainer.innerHTML = '';
+                rackElements = [];
+                aisleData = {};
+
+                for (let i = 0; i < ROW_LETTERS.length; i += 2) {
+                    const rowLetter1 = ROW_LETTERS[i], rowLetter2 = ROW_LETTERS[i+1], aisleNum = (i/2) + 1, aisleName = `Hot Aisle ${aisleNum}`, assigner = createCustomerAssigner();
+                    const aisleGroupContainer = document.createElement('div');
+                    aisleGroupContainer.className = 'space-y-4';
+                    
+                    aisleGroupContainer.appendChild(createRackRow(rowLetter1, assigner));
+                    
+                    const hotAisleDiv = document.createElement('div');
+                    hotAisleDiv.className = 'hot-aisle text-center py-3 my-2 rounded-md';
+                    hotAisleDiv.innerHTML = `<div class="heat-shimmer"></div><div class="relative text-base font-semibold text-white text-shadow-lg">${aisleName}</div>`;
+                    aisleGroupContainer.appendChild(hotAisleDiv);
+                    aisleData[aisleName] = { element: hotAisleDiv, racks: [] };
+
+                    aisleGroupContainer.appendChild(createRackRow(rowLetter2, assigner));
+                    floorPlanContainer.appendChild(aisleGroupContainer);
+                }
+
+                // Associate racks with their aisles for heatmap calculation
+                for (const rackId in rackDataStore) {
+                    const rack = rackDataStore[rackId];
+                    const aisleName = `Hot Aisle ${Math.ceil((ROW_LETTERS.indexOf(rack.id[0]) + 1) / 2)}`;
+                    if (aisleData[aisleName]) {
+                        aisleData[aisleName].racks.push(rack);
+                    }
+                }
+                updateHeatmaps();
+            }
+            
+            function updateHeatmaps() {
+                const MIN_TEMP = 30; // Green
+                const MAX_TEMP = 45; // Red
+
+                for (const aisleName in aisleData) {
+                    const aisle = aisleData[aisleName];
+                    const totalTemp = aisle.racks.reduce((sum, rack) => sum + rack.tempRear, 0);
+                    const avgTemp = totalTemp / aisle.racks.length;
+                    
+                    const percent = Math.max(0, Math.min(1, (avgTemp - MIN_TEMP) / (MAX_TEMP - MIN_TEMP)));
+                    
+                    // Simple HSL interpolation: Green (120) -> Yellow (60) -> Red (0)
+                    const hue = 120 * (1 - percent);
+                    aisle.element.style.backgroundColor = `hsl(${hue}, 90%, 50%)`;
+                }
+            }
+
+            function applyFilters() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const tempValue = tempFilter.value;
+                const pduValue = pduFilter.value;
+
+                rackElements.forEach(rackDiv => {
+                    const rackData = rackDataStore[rackDiv.dataset.rackId];
+                    let visible = true;
+
+                    // Search filter
+                    if (searchTerm && !rackData.id.toLowerCase().includes(searchTerm) && !rackData.customer.toLowerCase().includes(searchTerm)) {
+                        visible = false;
+                    }
+
+                    // Temperature filter
+                    const temp = rackData.tempRear;
+                    if (tempValue === 'critical' && temp < 40) visible = false;
+                    if (tempValue === 'warning' && (temp < 35 || temp >= 40)) visible = false;
+                    if (tempValue === 'normal' && temp >= 35) visible = false;
+                    
+                    // PDU filter
+                    if (pduValue === 'offline' && (rackData.pduA_status === 'ONLINE' && rackData.pduB_status === 'ONLINE')) visible = false;
+                    if (pduValue === 'online' && (rackData.pduA_status === 'OFFLINE' || rackData.pduB_status === 'OFFLINE')) visible = false;
+
+                    rackDiv.style.opacity = visible ? '1' : '0.2';
+                    rackDiv.style.pointerEvents = visible ? 'auto' : 'none';
+                });
+            }
+
+            function renderRackElevation(container, usedSpace) {
+                const totalUs = 54, uHeight = 4, svgHeight = totalUs * uHeight + 10;
+                let svgContent = `<svg viewBox="0 0 120 ${svgHeight}" class="w-full h-full">`;
+                svgContent += `<rect x="15" y="5" width="90" height="${totalUs * uHeight}" rx="3" ry="3" fill="#f3f4f6" stroke="#d1d5db" stroke-width="1"/>`;
+                for (let i = 0; i < totalUs; i++) {
+                    const uNumber = totalUs - i, y = i * uHeight + 5, isOccupied = i >= (totalUs - usedSpace);
+                    svgContent += `<rect x="20" y="${y}" width="80" height="${uHeight - 1}" rx="1" ry="1" fill="${isOccupied ? '#4b5563' : '#e5e7eb'}"/>`;
+                    if (uNumber % 5 === 0 || uNumber === 1 || uNumber === 54) {
+                        svgContent += `<text x="10" y="${y + uHeight - 1}" font-family="monospace" font-size="3" fill="#6b7280" text-anchor="middle">${uNumber}</text>`;
+                        svgContent += `<text x="110" y="${y + uHeight - 1}" font-family="monospace" font-size="3" fill="#6b7280" text-anchor="middle">${uNumber}</text>`;
+                    }
+                }
+                svgContent += `</svg>`;
+                container.innerHTML = svgContent;
+            }
+
+            function updateMetricsDisplay(data) {
+                renderRackElevation(document.getElementById('rack-elevation-container'), data.space);
+                document.getElementById('space-text').textContent = `${data.space} / 54 U`;
+                const powerBar = document.getElementById('power-bar'), powerPercent = (data.power / 5.0) * 100;
+                powerBar.style.width = `${powerPercent}%`;
+                powerBar.textContent = `${data.power.toFixed(2)} kW`;
+                if(powerPercent > 80) powerBar.className = powerBar.className.replace(/bg-\w+-500/, 'bg-red-500'); else if (powerPercent > 60) powerBar.className = powerBar.className.replace(/bg-\w+-500/, 'bg-yellow-500'); else powerBar.className = powerBar.className.replace(/bg-\w+-500/, 'bg-green-500');
+                document.getElementById('power-capacity').textContent = `/ 5.00 kW Capacity`;
+                const updateTempColor = (elem, temp) => {
+                    elem.textContent = `${temp.toFixed(1)}°C`;
+                    elem.className = elem.className.replace(/text-\w+-600/, temp > 35 || temp < 18 ? 'text-red-600' : temp > 30 || temp < 20 ? 'text-yellow-600' : 'text-green-600');
+                };
+                updateTempColor(document.getElementById('temp-front'), data.tempFront);
+                updateTempColor(document.getElementById('temp-rear'), data.tempRear);
+                document.getElementById('humidity').textContent = `${data.humidity.toFixed(1)}%`;
+                const doorStatusElem = document.getElementById('door-status');
+                doorStatusElem.textContent = data.doorStatus;
+                doorStatusElem.className = 'text-2xl font-bold mt-1 ' + (data.doorStatus === 'OPEN' ? 'text-red-600' : 'text-green-600');
+                const updatePduStatus = (elemId, status) => {
+                    const elem = document.getElementById(elemId);
+                    elem.textContent = status;
+                    elem.className = 'px-3 py-1 mt-1 inline-block text-white text-sm font-bold rounded-full ' + (status === 'ONLINE' ? 'bg-green-500' : 'bg-red-500');
+                };
+                updatePduStatus('pdu-a-status', data.pduA_status);
+                updatePduStatus('pdu-b-status', data.pduB_status);
+            }
+            
+            function showMetricsModal(initialData) {
+                document.getElementById('modal-rack-id').textContent = `Rack ${initialData.id}`;
+                document.getElementById('modal-customer').textContent = initialData.customer;
+                let currentData = { ...initialData };
+                updateMetricsDisplay(currentData);
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+                if (metricsInterval) clearInterval(metricsInterval);
+                metricsInterval = setInterval(() => {
+                    // Simulate data changes
+                    const rackId = currentData.id;
+                    rackDataStore[rackId].power = Math.max(0, rackDataStore[rackId].power + (Math.random() - 0.5) * 0.1);
+                    rackDataStore[rackId].tempFront = Math.max(15, rackDataStore[rackId].tempFront + (Math.random() - 0.5) * 0.2);
+                    rackDataStore[rackId].tempRear = Math.max(20, rackDataStore[rackId].tempRear + (Math.random() - 0.5) * 0.3);
+                    rackDataStore[rackId].humidity = Math.max(30, Math.min(70, rackDataStore[rackId].humidity + (Math.random() - 0.5) * 0.5));
+                    if(Math.random() < 0.05) rackDataStore[rackId].doorStatus = rackDataStore[rackId].doorStatus === 'CLOSED' ? 'OPEN' : 'CLOSED';
+                    if(Math.random() < 0.02) rackDataStore[rackId].pduA_status = rackDataStore[rackId].pduA_status === 'ONLINE' ? 'OFFLINE' : 'ONLINE';
+                    if(Math.random() < 0.02) rackDataStore[rackId].pduB_status = rackDataStore[rackId].pduB_status === 'ONLINE' ? 'OFFLINE' : 'ONLINE';
+                    
+                    updateMetricsDisplay(rackDataStore[rackId]);
+                    updateHeatmaps();
+                }, 2000);
+            }
+
+            function closeModal() {
+                if (metricsInterval) clearInterval(metricsInterval);
+                modal.classList.add('opacity-0');
+                setTimeout(() => modal.classList.add('pointer-events-none'), 300);
+                modalContent.classList.remove('scale-100');
+                modalContent.classList.add('scale-95');
+            }
+
+            buildFloorPlan();
+            
+            searchInput.addEventListener('input', applyFilters);
+            tempFilter.addEventListener('change', applyFilters);
+            pduFilter.addEventListener('change', applyFilters);
+
+            closeModalBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => (e.target === modal) && closeModal());
+            document.addEventListener('keydown', (e) => (e.key === 'Escape') && closeModal());
+        });
+    </script>
+</body>
+</html>

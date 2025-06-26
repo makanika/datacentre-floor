@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas DCIM - Standard Bank Overview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f2f5;
+        }
+        .rack {
+            border: 2px solid #e2e8f0;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .rack-status-normal { border-left: 5px solid #22c55e; }
+        .rack-status-warning { border-left: 5px solid #f97316; }
+        .rack-status-alert { border-left: 5px solid #ef4444; }
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar Navigation -->
+        <div class="w-64 bg-white shadow-md flex flex-col">
+            <div class="p-6 text-center border-b">
+                <h1 class="text-2xl font-bold text-indigo-600">Atlas DCIM</h1>
+                <p class="text-xs text-gray-500">Kampala Facility</p>
+            </div>
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <a href="#" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"><i class="fas fa-tachometer-alt w-6 mr-2"></i> Dashboard</a>
+                <a href="#" class="flex items-center px-4 py-2 text-gray-700 bg-indigo-100 text-indigo-700 rounded-md"><i class="fas fa-building w-6 mr-2"></i> Customer View</a>
+                <a href="#" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"><i class="fas fa-server w-6 mr-2"></i> Rack Layout</a>
+                <a href="#" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"><i class="fas fa-bolt w-6 mr-2"></i> Power & Cooling</a>
+                <a href="#" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"><i class="fas fa-walking w-6 mr-2"></i> Visitor Logs</a>
+                <a href="#" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"><i class="fas fa-chart-bar w-6 mr-2"></i> Reporting</a>
+                <a href="#" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"><i class="fas fa-cogs w-6 mr-2"></i> Settings</a>
+            </nav>
+            <div class="px-4 py-4 border-t">
+                <p class="text-sm text-gray-600" id="currentTime">Loading...</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+            
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800">Customer Dashboard: Standard Bank</h2>
+                    <p class="text-gray-500">Real-time overview of assets and activity.</p>
+                </div>
+                 <div class="flex items-center space-x-4">
+                     <i class="fas fa-bell text-gray-500 text-xl cursor-pointer hover:text-indigo-600"></i>
+                     <div class="flex items-center">
+                         <img src="https://placehold.co/40x40/E2E8F0/4A5568?text=AU" alt="Admin User" class="w-10 h-10 rounded-full mr-3">
+                         <div>
+                            <p class="font-semibold text-sm">Admin User</p>
+                            <p class="text-xs text-gray-500">Facility Manager</p>
+                         </div>
+                     </div>
+                 </div>
+            </div>
+
+            <!-- Customer Metric Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="metric-card p-5 flex items-center">
+                    <i class="fas fa-server text-3xl text-indigo-500 bg-indigo-100 p-4 rounded-full"></i>
+                    <div class="ml-4">
+                        <h4 class="text-gray-500 font-medium text-sm">Active Racks</h4>
+                        <p class="text-2xl font-bold text-gray-800">8</p>
+                    </div>
+                </div>
+                <div class="metric-card p-5 flex items-center">
+                    <i class="fas fa-bolt text-3xl text-orange-500 bg-orange-100 p-4 rounded-full"></i>
+                    <div class="ml-4">
+                        <h4 class="text-gray-500 font-medium text-sm">Total Power Draw</h4>
+                        <p class="text-2xl font-bold text-gray-800">32.5 <span class="text-lg font-medium">kW</span></p>
+                    </div>
+                </div>
+                <div class="metric-card p-5 flex items-center">
+                     <i class="fas fa-thermometer-half text-3xl text-red-500 bg-red-100 p-4 rounded-full"></i>
+                    <div class="ml-4">
+                        <h4 class="text-gray-500 font-medium text-sm">Avg. Temp</h4>
+                        <p class="text-2xl font-bold text-gray-800">22.1 <span class="text-lg font-medium">&deg;C</span></p>
+                    </div>
+                </div>
+                <div class="metric-card p-5 flex items-center">
+                    <i class="fas fa-walking text-3xl text-green-500 bg-green-100 p-4 rounded-full"></i>
+                    <div class="ml-4">
+                        <h4 class="text-gray-500 font-medium text-sm">Visits This Month</h4>
+                        <p class="text-2xl font-bold text-gray-800">4</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Rack Elevation & Metrics -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Rack Elevation & Status</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 text-center">
+                        <!-- Rack 1 -->
+                        <div class="rack rack-status-normal p-4">
+                            <h5 class="font-bold">A-01</h5>
+                            <i class="fas fa-server text-6xl text-gray-300 my-4"></i>
+                            <div class="text-xs text-left space-y-1">
+                                <p><i class="fas fa-bolt w-4 text-orange-500"></i> 4.1 kW</p>
+                                <p><i class="fas fa-thermometer-half w-4 text-red-500"></i> 21.5 &deg;C</p>
+                            </div>
+                        </div>
+                        <!-- Rack 2 -->
+                        <div class="rack rack-status-normal p-4">
+                            <h5 class="font-bold">A-02</h5>
+                             <i class="fas fa-server text-6xl text-gray-300 my-4"></i>
+                            <div class="text-xs text-left space-y-1">
+                                <p><i class="fas fa-bolt w-4 text-orange-500"></i> 3.8 kW</p>
+                                <p><i class="fas fa-thermometer-half w-4 text-red-500"></i> 21.9 &deg;C</p>
+                            </div>
+                        </div>
+                        <!-- Rack 3 -->
+                        <div class="rack rack-status-warning p-4">
+                            <h5 class="font-bold">A-03</h5>
+                             <i class="fas fa-server text-6xl text-gray-300 my-4"></i>
+                            <div class="text-xs text-left space-y-1">
+                                <p><i class="fas fa-bolt w-4 text-orange-500"></i> 5.9 kW <i class="fas fa-exclamation-triangle text-orange-400 ml-1"></i></p>
+                                <p><i class="fas fa-thermometer-half w-4 text-red-500"></i> 23.8 &deg;C <i class="fas fa-exclamation-triangle text-orange-400 ml-1"></i></p>
+                            </div>
+                        </div>
+                        <!-- Rack 4 -->
+                        <div class="rack rack-status-normal p-4">
+                            <h5 class="font-bold">B-01</h5>
+                             <i class="fas fa-server text-6xl text-gray-300 my-4"></i>
+                            <div class="text-xs text-left space-y-1">
+                                <p><i class="fas fa-bolt w-4 text-orange-500"></i> 4.5 kW</p>
+                                <p><i class="fas fa-thermometer-half w-4 text-red-500"></i> 22.0 &deg;C</p>
+                            </div>
+                        </div>
+                        <!-- More racks -->
+                         <div class="rack rack-status-normal p-4"><h5 class="font-bold">B-02</h5><i class="fas fa-server text-6xl text-gray-300 my-4"></i><div class="text-xs text-left space-y-1"><p><i class="fas fa-bolt w-4 text-orange-500"></i> 4.0 kW</p><p><i class="fas fa-thermometer-half w-4 text-red-500"></i> 21.7 &deg;C</p></div></div>
+                         <div class="rack rack-status-normal p-4"><h5 class="font-bold">B-03</h5><i class="fas fa-server text-6xl text-gray-300 my-4"></i><div class="text-xs text-left space-y-1"><p><i class="fas fa-bolt w-4 text-orange-500"></i> 3.9 kW</p><p><i class="fas fa-thermometer-half w-4 text-red-500"></i> 22.3 &deg;C</p></div></div>
+                         <div class="rack rack-status-alert p-4"><h5 class="font-bold">C-01</h5><i class="fas fa-server text-6xl text-gray-300 my-4"></i><div class="text-xs text-left space-y-1"><p><i class="fas fa-bolt w-4 text-orange-500"></i> 6.2 kW <i class="fas fa-skull-crossbones text-red-500 ml-1"></i></p><p><i class="fas fa-thermometer-half w-4 text-red-500"></i> 25.1 &deg;C <i class="fas fa-skull-crossbones text-red-500 ml-1"></i></p></div></div>
+                         <div class="rack rack-status-normal p-4"><h5 class="font-bold">C-02</h5><i class="fas fa-server text-6xl text-gray-300 my-4"></i><div class="text-xs text-left space-y-1"><p><i class="fas fa-bolt w-4 text-orange-500"></i> 4.1 kW</p><p><i class="fas fa-thermometer-half w-4 text-red-500"></i> 21.8 &deg;C</p></div></div>
+                    </div>
+                     <!-- Real-time Charts for a selected rack -->
+                    <div class="mt-8">
+                        <h4 class="font-semibold text-gray-700">Live Metrics: Rack A-03</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 h-56">
+                            <canvas id="powerChart"></canvas>
+                            <canvas id="tempChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Visits Log -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Recent Visits: Standard Bank</h3>
+                    <div class="space-y-4">
+                        <!-- Visit 1 -->
+                        <div class="flex items-start">
+                           <div class="flex-shrink-0"><i class="fas fa-user-check text-green-500 mt-1"></i></div>
+                           <div class="ml-3">
+                               <p class="font-semibold text-sm text-gray-800">Nalule Grace</p>
+                               <p class="text-xs text-gray-500">Checked In: 25 May 2024, 09:15</p>
+                               <p class="text-xs text-gray-500">Checked Out: 25 May 2024, 11:45</p>
+                               <p class="text-xs text-gray-500">Purpose: Router Maintenance</p>
+                           </div>
+                        </div>
+                        <!-- Visit 2 -->
+                         <div class="flex items-start">
+                           <div class="flex-shrink-0"><i class="fas fa-user-check text-green-500 mt-1"></i></div>
+                           <div class="ml-3">
+                               <p class="font-semibold text-sm text-gray-800">Okello James</p>
+                               <p class="text-xs text-gray-500">Checked In: 18 May 2024, 14:00</p>
+                               <p class="text-xs text-gray-500">Checked Out: 18 May 2024, 15:30</p>
+                               <p class="text-xs text-gray-500">Purpose: Server Upgrade</p>
+                           </div>
+                        </div>
+                        <!-- Visit 3 -->
+                         <div class="flex items-start">
+                           <div class="flex-shrink-0"><i class="fas fa-user-check text-green-500 mt-1"></i></div>
+                           <div class="ml-3">
+                               <p class="font-semibold text-sm text-gray-800">Mugisha David</p>
+                               <p class="text-xs text-gray-500">Checked In: 12 May 2024, 10:30</p>
+                               <p class="text-xs text-gray-500">Checked Out: 12 May 2024, 12:05</p>
+                               <p class="text-xs text-gray-500">Purpose: Visual Inspection</p>
+                           </div>
+                        </div>
+                        <!-- Visit 4 -->
+                         <div class="flex items-start">
+                           <div class="flex-shrink-0"><i class="fas fa-user-clock text-blue-500 mt-1"></i></div>
+                           <div class="ml-3">
+                               <p class="font-semibold text-sm text-gray-800">Achen Sarah</p>
+                               <p class="text-xs text-blue-500">Scheduled: 28 May 2024, 11:00</p>
+                               <p class="text-xs text-gray-500">Purpose: New PDU installation</p>
+                           </div>
+                        </div>
+
+                        <div class="pt-2">
+                             <a href="#" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800">View All Logs for Standard Bank &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+<script>
+    // Update current time
+    function updateTime() {
+        const timeEl = document.getElementById('currentTime');
+        const now = new Date();
+        timeEl.textContent = now.toLocaleString('en-UG', {
+            dateStyle: 'full',
+            timeStyle: 'medium'
+        });
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // Chart.js configuration
+    const generateChartData = (count) => {
+        const labels = [];
+        for (let i = count - 1; i >= 0; i--) {
+            const time = new Date(Date.now() - i * 60000);
+            labels.push(time.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+        }
+        return labels;
+    };
+    
+    const powerData = {
+        labels: generateChartData(15),
+        datasets: [{
+            label: 'Power (kW)',
+            data: [5.8, 5.8, 5.9, 5.8, 5.9, 5.9, 5.9, 5.8, 5.9, 5.9, 6.0, 5.9, 5.9, 6.1, 5.9],
+            fill: true,
+            borderColor: 'rgb(249, 115, 22)',
+            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+            tension: 0.4,
+            pointRadius: 0
+        }]
+    };
+
+    const tempData = {
+        labels: generateChartData(15),
+        datasets: [{
+            label: 'Temp (°C)',
+            data: [23.5, 23.6, 23.5, 23.6, 23.8, 23.7, 23.8, 23.9, 23.8, 24.0, 23.9, 24.1, 23.8, 23.9, 23.8],
+            fill: true,
+            borderColor: 'rgb(239, 68, 68)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            tension: 0.4,
+            pointRadius: 0
+        }]
+    };
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: false,
+                grid: {
+                    color: '#e5e7eb'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    };
+
+    new Chart(document.getElementById('powerChart'), { type: 'line', data: powerData, options: chartOptions });
+    new Chart(document.getElementById('tempChart'), { type: 'line', data: tempData, options: chartOptions });
+
+</script>
+
+</body>
+</html>
